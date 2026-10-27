@@ -40,7 +40,8 @@ const server = http.createServer((req, res) => {
     res.end(
       JSON.stringify({
         status: 'ok',
-        service: 'fairshift-sentinel',
+        service: 'thozhil',
+        tagline: 'Work with dignity.',
         sdg: 'UN SDG 8 - Decent Work and Economic Growth',
         timestamp: new Date().toISOString(),
       })
@@ -78,7 +79,7 @@ const server = http.createServer((req, res) => {
     fs.readFile(indexPath, (readErr, content) => {
       if (readErr) {
         res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8', ...SECURITY_HEADERS });
-        res.end('FairShift Sentinel build artifacts not found. Run npm run build first.');
+        res.end('THOZHIL build artifacts not found. Run npm run build first.');
         return;
       }
       res.writeHead(200, {
@@ -92,5 +93,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`FairShift Sentinel production server listening on http://${HOST}:${PORT}`);
+  console.log(`THOZHIL production server listening on http://${HOST}:${PORT}`);
 });

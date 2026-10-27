@@ -16,10 +16,12 @@ import {
 import {
   detectPersistenceMode,
   loadAppState,
+  loadSavedLanguage,
   PersistedAppState,
   PersistenceMode,
   resetAppStateToSeed,
   saveAppState,
+  saveLanguage,
 } from '../services/repository';
 import {
   completeCheckOutRecord,
@@ -107,7 +109,7 @@ const AppContext = createContext<AppContextValue | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, setState] = useState<PersistedAppState>(() => loadAppState());
   const [industry, setIndustryState] = useState<IndustryId>('construction');
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguageState] = useState<Language>(() => loadSavedLanguage());
   const [activeRole, setActiveRole] = useState<UserRole>('worker');
   const [selectedWorkerId, setSelectedWorkerId] = useState<string>('worker-con-1');
 
@@ -116,6 +118,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     saveAppState(state);
   }, [state]);
+
+  const setLanguage = (nextLang: Language) => {
+    setLanguageState(nextLang);
+    saveLanguage(nextLang);
+  };
 
   const setIndustry = (nextIndustry: IndustryId) => {
     setIndustryState(nextIndustry);

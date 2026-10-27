@@ -18,9 +18,10 @@ import {
   Shield,
 } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
-import { TRANSLATIONS } from './i18n/translations';
+import { LANGUAGE_OPTIONS, TRANSLATIONS } from './i18n/translations';
 import { WorkerPortal } from './components/worker/WorkerPortal';
 import { AdminDashboard } from './components/admin/AdminDashboard';
+import { Language } from './types/domain';
 
 const AppShell: React.FC = () => {
   const {
@@ -51,101 +52,102 @@ const AppShell: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
-      {/* Explicit Demo / Cloud Persistence Mode Banner */}
+      {/* Persistence & SDG Status Bar */}
       <div
         role="region"
         aria-label="Persistence Mode Status"
-        className="bg-navy-950 text-slate-200 text-xs px-4 py-2 border-b border-navy-800"
+        className="bg-slate-950 text-slate-300 text-xs px-4 py-1.5 border-b border-slate-800"
       >
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Database className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
-            <span className="font-medium">
+            <span>
               {persistenceMode === 'LOCAL_DEMO'
                 ? t.demoModeBanner
                 : t.firebaseConnectedBanner}
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-emerald-900/80 text-emerald-200 font-semibold">
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded bg-slate-800 text-slate-200 font-medium border border-slate-700">
               {t.sdgBadge}
             </span>
             <button
               type="button"
               onClick={resetDemoData}
-              className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 font-semibold underline focus:outline-none focus:ring-2 focus:ring-amber-400 rounded px-1"
+              className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 font-medium underline focus:outline-none focus:ring-2 focus:ring-amber-400 rounded px-1"
             >
-              <RotateCcw className="w-3 h-3" />
-              Reset Seed Data
+              <RotateCcw className="w-3 h-3" aria-hidden="true" />
+              {t.resetSeedBtn}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Main Global Navigation Bar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-          {/* Brand Logo */}
+      {/* Main Operational Navigation Header */}
+      <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+          {/* Brand Identity: THOZHIL — Work with dignity. */}
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-navy-900 text-amber-400 flex items-center justify-center font-bold shadow-sm">
-              <Shield className="w-6 h-6" aria-hidden="true" />
+            <div className="w-9 h-9 rounded-md bg-amber-500 text-slate-950 flex items-center justify-center font-bold">
+              <Shield className="w-5 h-5" aria-hidden="true" />
             </div>
             <div>
-              <span className="font-extrabold text-base sm:text-lg tracking-tight text-navy-950 block leading-none">
+              <span className="font-bold text-base sm:text-lg tracking-tight text-white block leading-none">
                 {t.appName}
               </span>
-              <span className="text-[11px] font-semibold text-slate-500">
-                Decent Work & Safety Platform
+              <span className="text-xs text-slate-300 block mt-0.5">
+                {t.tagline}
               </span>
             </div>
           </div>
 
-          {/* Industry Sector Switcher (Construction vs Manufacturing) */}
-          <div
-            role="group"
-            aria-label={t.switchIndustryLabel}
-            className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200"
-          >
-            <button
-              type="button"
-              onClick={() => setIndustry('construction')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                industry === 'construction'
-                  ? 'bg-amber-500 text-slate-950 shadow-sm'
-                  : 'text-slate-700 hover:text-slate-900'
-              }`}
+          {/* Controls: Industry Switcher, View Switcher, Trilingual Language Switcher */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Industry Sector Switcher */}
+            <div
+              role="group"
+              aria-label={t.switchIndustryLabel}
+              className="flex items-center bg-slate-800 p-0.5 rounded-md border border-slate-700"
             >
-              <Building2 className="w-3.5 h-3.5" aria-hidden="true" />
-              Construction
-            </button>
-            <button
-              type="button"
-              onClick={() => setIndustry('manufacturing')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                industry === 'manufacturing'
-                  ? 'bg-blue-700 text-white shadow-sm'
-                  : 'text-slate-700 hover:text-slate-900'
-              }`}
-            >
-              <Factory className="w-3.5 h-3.5" aria-hidden="true" />
-              Manufacturing
-            </button>
-          </div>
+              <button
+                type="button"
+                onClick={() => setIndustry('construction')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold transition ${
+                  industry === 'construction'
+                    ? 'bg-amber-500 text-slate-950'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" aria-hidden="true" />
+                {t.constructionLabel}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIndustry('manufacturing')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold transition ${
+                  industry === 'manufacturing'
+                    ? 'bg-sky-500 text-slate-950'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                <Factory className="w-3.5 h-3.5" aria-hidden="true" />
+                {t.manufacturingLabel}
+              </button>
+            </div>
 
-          {/* Dual Interface Switcher (Worker Portal vs Employer Command Center) + Language Toggle */}
-          <div className="flex items-center gap-2">
+            {/* Interface Switcher (Worker View vs Admin View) */}
             <div
               role="group"
               aria-label="Interface Mode"
-              className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200"
+              className="flex items-center bg-slate-800 p-0.5 rounded-md border border-slate-700"
             >
               <button
                 type="button"
                 onClick={handleGoWorker}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold transition ${
                   !isAdminRoute
-                    ? 'bg-navy-900 text-white shadow-sm'
-                    : 'text-slate-700 hover:text-slate-900'
+                    ? 'bg-white text-slate-950'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
                 <HardHat className="w-3.5 h-3.5" aria-hidden="true" />
@@ -154,10 +156,10 @@ const AppShell: React.FC = () => {
               <button
                 type="button"
                 onClick={handleGoAdmin}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-semibold transition ${
                   isAdminRoute
-                    ? 'bg-navy-900 text-white shadow-sm'
-                    : 'text-slate-700 hover:text-slate-900'
+                    ? 'bg-white text-slate-950'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
                 <LayoutDashboard className="w-3.5 h-3.5" aria-hidden="true" />
@@ -165,15 +167,34 @@ const AppShell: React.FC = () => {
               </button>
             </div>
 
-            <button
-              type="button"
-              aria-label="Switch Language Tamil or English"
-              onClick={() => setLanguage(language === 'en' ? 'ta' : 'en')}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-bold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-navy-700"
+            {/* Trilingual Selector: English | தமிழ் | हिन्दी */}
+            <div
+              role="group"
+              aria-label={t.languageLabel}
+              className="flex items-center bg-slate-800 p-0.5 rounded-md border border-slate-700"
             >
-              <Globe className="w-3.5 h-3.5 text-navy-700" aria-hidden="true" />
-              <span>{language === 'en' ? 'தமிழ்' : 'English'}</span>
-            </button>
+              <span className="px-1.5 text-slate-400 hidden md:inline-flex items-center" title={t.languageLabel}>
+                <Globe className="w-3.5 h-3.5" aria-hidden="true" />
+              </span>
+              {LANGUAGE_OPTIONS.map((opt) => {
+                const isActive = language === opt.code;
+                return (
+                  <button
+                    key={opt.code}
+                    type="button"
+                    onClick={() => setLanguage(opt.code as Language)}
+                    aria-pressed={isActive}
+                    className={`px-2.5 py-1.5 rounded text-xs font-semibold transition ${
+                      isActive
+                        ? 'bg-amber-400 text-slate-950'
+                        : 'text-slate-300 hover:text-white'
+                    }`}
+                  >
+                    {opt.nativeLabel}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </header>
@@ -189,14 +210,12 @@ const AppShell: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-4 px-4 text-xs text-slate-500 mt-10">
+      <footer className="bg-white border-t border-slate-200 py-3.5 px-4 text-xs text-slate-600 mt-10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
-            <strong>FairShift Sentinel</strong> • UN SDG 8: Decent Work and Economic Growth
+            <strong className="text-slate-900">{t.appName}</strong> — {t.tagline} • {t.sdgBadge}
           </span>
-          <span>
-            Dual-Interface Workforce Safety & Pay Transparency • Construction & Manufacturing
-          </span>
+          <span>{t.footerRight}</span>
         </div>
       </footer>
     </div>

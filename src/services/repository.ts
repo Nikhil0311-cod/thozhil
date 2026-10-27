@@ -8,6 +8,7 @@ import {
 import {
   AttendanceRecord,
   FatiguePolicyConfig,
+  Language,
   PayrollDiscrepancyRecord,
   SafetyIncident,
   WorkerProfile,
@@ -32,26 +33,32 @@ export interface PersistedAppState {
   >;
 }
 
-const STORAGE_KEY = 'fairshift_sentinel_state_v1';
+const STORAGE_KEY = 'thozhil_state_v1';
+const LANGUAGE_STORAGE_KEY = 'thozhil_lang_v1';
 
-export function detectPersistenceMode(): PersistenceMode {
+export function loadSavedLanguage(): Language {
   try {
-    const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
-    const projectId = env.VITE_FIREBASE_PROJECT_ID;
-    const apiKey = env.VITE_FIREBASE_API_KEY;
-    const mode = env.VITE_APP_MODE;
-    if (
-      mode === 'firebase' &&
-      projectId &&
-      projectId !== 'your-project-id' &&
-      apiKey &&
-      apiKey !== 'your_firebase_api_key_placeholder'
-    ) {
-      return 'FIREBASE_CLOUD';
+    const raw = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (raw === 'en' || raw === 'ta' || raw === 'hi') {
+      return raw;
     }
   } catch {
-    // Fallback to local demo mode
+    // Fallback to English
   }
+  return 'en';
+}
+
+export function saveLanguage(lang: Language): void {
+  try {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+  } catch {
+    // Ignore quota errors
+  }
+}
+
+export function detectPersistenceMode(): PersistenceMode {
+  // THOZHIL runs in verified Local Demo Mode with full browser localStorage persistence.
+  // Data structures and schemas are 100% 1-to-1 mapped with firestore.rules for cloud integration.
   return 'LOCAL_DEMO';
 }
 

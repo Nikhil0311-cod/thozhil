@@ -2,7 +2,7 @@ export type IndustryId = 'construction' | 'manufacturing';
 
 export type UserRole = 'worker' | 'admin' | 'safety_officer';
 
-export type Language = 'en' | 'ta';
+export type Language = 'en' | 'ta' | 'hi';
 
 export type IncidentSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
@@ -15,10 +15,13 @@ export type AttendanceStatus =
   | 'FLAGGED_ZERO_DURATION'
   | 'FLAGGED_OVERTIME_REVIEW';
 
-export interface BilingualText {
+export interface LocalizedText {
   en: string;
   ta: string;
+  hi: string;
 }
+
+export type BilingualText = LocalizedText;
 
 export interface SiteConfig {
   id: string;
@@ -83,7 +86,8 @@ export interface WorkerProfile {
   employeeCode: string;
   name: string;
   nameTa: string;
-  roleTitle: BilingualText;
+  nameHi: string;
+  roleTitle: LocalizedText;
   industry: IndustryId;
   siteId: string;
   departmentId: string;

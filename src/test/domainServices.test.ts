@@ -29,7 +29,7 @@ import {
 import { DEFAULT_FATIGUE_POLICY } from '../config/industries';
 import { SEED_ATTENDANCE, SEED_INCIDENTS, SEED_PAYROLL_DISCREPANCIES, SEED_WHAT_IF_PLANS } from '../data/seedData';
 
-describe('Feature A: SmartShift Attendance & Overtime Calculations', () => {
+describe('Feature A: Attendance & Overtime Calculations', () => {
   it('calculates exact regular and overtime hours with configurable break deductions', () => {
     const res = calculateShiftMetrics(
       '2026-10-27T07:00:00.000Z',
@@ -146,7 +146,7 @@ describe('Feature A: SmartShift Attendance & Overtime Calculations', () => {
   });
 });
 
-describe('Feature C: WageLens Pay Transparency & Arithmetic', () => {
+describe('Feature C: Wage Insights & Pay Arithmetic', () => {
   it('calculates regular earnings, overtime earnings, gross pay, and net pay accurately with INR formatting', () => {
     const res = calculateWageEstimate({
       regularHours: 24,
@@ -187,7 +187,7 @@ describe('Feature C: WageLens Pay Transparency & Arithmetic', () => {
     expect(excessiveDeduction.errors[0]).toContain('cannot exceed gross');
   });
 
-  it('detects discrepancies between SmartShift recorded overtime and payroll register entries', () => {
+  it('detects discrepancies between recorded overtime and payroll register entries', () => {
     const disc = evaluatePayrollDiscrepancy({
       id: 'PAY-TEST-1',
       workerId: 'worker-con-1',
@@ -208,7 +208,7 @@ describe('Feature C: WageLens Pay Transparency & Arithmetic', () => {
   });
 });
 
-describe('Feature B: SafeVoice Incident Management, Privacy & Role Authorization', () => {
+describe('Feature B: Safety Incident Management, Privacy & Role Authorization', () => {
   it('strips worker identity on anonymous reports and provides a tracking code', () => {
     const anonIncident = createSafetyIncidentRecord(
       {

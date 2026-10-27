@@ -1,8 +1,8 @@
 {
-  "name": "fairshift-sentinel",
+  "name": "thozhil",
   "private": true,
   "version": "1.0.0",
-  "description": "FairShift Sentinel — Decent Work & Safety Intelligence Platform (UN SDG 8) for Construction and Manufacturing Shift Workforces",
+  "description": "THOZHIL — Work with dignity. Workplace safety, attendance, and wage transparency platform (UN SDG 8)",
   "type": "module",
   "scripts": {
     "dev": "vite",

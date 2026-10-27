@@ -8,7 +8,7 @@ import {
 
 const ALLOWED_TRANSITIONS: Record<IncidentStatus, IncidentStatus[]> = {
   OPEN: ['ASSIGNED'],
-  ASSIGNED: ['IN_PROGRESS', 'RESOLVED'],
+  ASSIGNED: ['IN_PROGRESS'],
   IN_PROGRESS: ['RESOLVED'],
   RESOLVED: [],
 };

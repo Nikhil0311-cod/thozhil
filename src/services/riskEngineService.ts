@@ -172,7 +172,7 @@ export function generateRiskResolutionQueue(params: {
       departmentId: pay.departmentId,
       title: `Wage & Hours Discrepancy (${pay.workerName} — ₹${Math.abs(pay.differenceInr)})`,
       whyGenerated: pay.explanation,
-      suggestedAction: `Reconcile SmartShift attendance records against payroll register for ${pay.workerName} (${pay.periodLabel}) so uncounted overtime is paid accurately.`,
+      suggestedAction: `Reconcile recorded attendance logs against the payroll register for ${pay.workerName} (${pay.periodLabel}) so uncounted overtime is paid accurately.`,
       sourceRecordIds: [pay.id],
       scoreBreakdown: `DiscrepancyBase(58) + AmountWeight(₹${Math.abs(pay.differenceInr)}) = ${priorityScore}/100`,
     });
@@ -182,7 +182,7 @@ export function generateRiskResolutionQueue(params: {
 }
 
 /**
- * Optional Differentiator (Section 11): FairShift What-If Shift Schedule Simulator.
+ * Shift Schedule Simulator:
  * Evaluates two proposed schedules against configured fatigue & staffing rules.
  */
 export function evaluateProposedSchedule(

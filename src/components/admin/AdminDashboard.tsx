@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   AlertOctagon,
@@ -49,11 +49,21 @@ export const AdminDashboard: React.FC = () => {
 
   const [subTab, setSubTab] = useState<AdminSubTab>('overview');
 
-  // Operational Filters (Section 9)
+  // Operational Filters
   const [siteFilter, setSiteFilter] = useState<string>('ALL');
   const [deptFilter, setDeptFilter] = useState<string>('ALL');
   const [shiftFilter, setShiftFilter] = useState<string>('ALL');
   const [dateRangeFilter, setDateRangeFilter] = useState<'ALL' | 'LAST_3_DAYS' | 'TODAY'>('ALL');
+
+  // Reset operational filters whenever industry toggles between Construction and Manufacturing
+  useEffect(() => {
+    setSiteFilter('ALL');
+    setDeptFilter('ALL');
+    setShiftFilter('ALL');
+    if (industryConfig.safetyOfficers[0]?.name) {
+      setActorName(industryConfig.safetyOfficers[0].name);
+    }
+  }, [industry]);
 
   // Incident Action Form state
   const [actorName, setActorName] = useState<string>(
@@ -146,7 +156,7 @@ export const AdminDashboard: React.FC = () => {
     });
   }, [payrollDiscrepancies, industry, siteFilter, deptFilter]);
 
-  // Derived Dashboard Summary Metrics (Never hardcoded!)
+  // Derived Dashboard Summary Metrics
   const metrics = useMemo(() => {
     const activeWorkersCount = filteredWorkers.length;
     const totalRegularHours = roundToTwo(
@@ -213,7 +223,7 @@ export const AdminDashboard: React.FC = () => {
     } else {
       setAdminActionFeedback({
         type: 'success',
-        message: `Incident ${incidentId} transitioned to ${toStatus} by ${actorName}.`,
+        message: `${incidentId} → ${t.statuses[toStatus]} (${actorName}).`,
       });
     }
   };
@@ -236,7 +246,7 @@ export const AdminDashboard: React.FC = () => {
     } else {
       setAdminActionFeedback({
         type: 'success',
-        message: `Fatigue alert ${alertId} acknowledged and logged.`,
+        message: `${alertId}: ${t.admin.acknowledgeAlertBtn} (${actorName}).`,
       });
     }
   };
@@ -258,8 +268,7 @@ export const AdminDashboard: React.FC = () => {
     } else {
       setAdminActionFeedback({
         type: 'success',
-        message:
-          'Fatigue monitoring policy thresholds updated. All worker attendance logs re-evaluated.',
+        message: `${t.admin.fatigueThresholdsTitle} — ${t.admin.applyPolicyBtn}.`,
       });
     }
   };
@@ -284,31 +293,33 @@ export const AdminDashboard: React.FC = () => {
   }, [industry, fatiguePolicy, planAExtraHours, planBExtraHours]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-      {/* Command Center Top Header & Role Authorization Bar */}
-      <header className="bg-navy-900 text-white rounded-2xl p-5 shadow-md border border-navy-800 space-y-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 space-y-5">
+      {/* Admin Top Header & RBAC Controls */}
+      <header className="bg-white rounded-lg p-4 sm:p-5 border border-slate-200 shadow-sm space-y-3.5">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded bg-amber-500 text-slate-950">
+              <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-900 text-amber-400">
                 {industryConfig.name[language]}
               </span>
-              <span className="text-xs text-slate-300 font-mono">
-                Seeded & Live Operational Records
+              <span className="text-xs text-slate-500">
+                {t.admin.operationalRecordsBadge}
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold mt-1">{t.admin.title}</h1>
-            <p className="text-sm text-slate-300">{t.admin.subtitle}</p>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 mt-1">
+              {t.admin.title}
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-600">{t.admin.subtitle}</p>
           </div>
 
-          {/* Role Simulation & Officer Identity Controls for RBAC Verification */}
-          <div className="flex flex-wrap items-center gap-3 bg-navy-800/90 p-3.5 rounded-xl border border-navy-700">
+          {/* Role Simulation & Officer Identity Controls */}
+          <div className="flex flex-wrap items-center gap-3 bg-slate-50 p-3 rounded-md border border-slate-200">
             <div>
               <label
                 htmlFor="rbac-role-select"
-                className="block text-[11px] font-bold uppercase text-amber-300 mb-1"
+                className="block text-[11px] font-semibold uppercase text-slate-600 mb-1"
               >
-                Active Session Role (RBAC Test)
+                {t.admin.activeRoleLabel}
               </label>
               <select
                 id="rbac-role-select"
@@ -316,27 +327,27 @@ export const AdminDashboard: React.FC = () => {
                 onChange={(e) =>
                   setActiveRole(e.target.value as 'worker' | 'admin' | 'safety_officer')
                 }
-                className="rounded-lg bg-navy-950 border border-navy-600 text-white px-3 py-1.5 text-xs font-bold"
+                className="rounded-md bg-white border border-slate-300 text-slate-900 px-2.5 py-1.5 text-xs font-semibold"
               >
-                <option value="admin">Administrator (Full Command Access)</option>
-                <option value="safety_officer">Authorized Safety Officer (HSE Access)</option>
-                <option value="worker">Worker Role (Read-Only in Admin — Blocks Mutations)</option>
+                <option value="admin">{t.admin.roleAdminOption}</option>
+                <option value="safety_officer">{t.admin.roleSafetyOfficerOption}</option>
+                <option value="worker">{t.admin.roleWorkerOption}</option>
               </select>
             </div>
 
             <div>
               <label
                 htmlFor="officer-actor-input"
-                className="block text-[11px] font-bold uppercase text-slate-300 mb-1"
+                className="block text-[11px] font-semibold uppercase text-slate-600 mb-1"
               >
-                Acting Officer / Manager Name
+                {t.admin.actingOfficerLabel}
               </label>
               <input
                 id="officer-actor-input"
                 type="text"
                 value={actorName}
                 onChange={(e) => setActorName(e.target.value)}
-                className="rounded-lg bg-navy-950 border border-navy-600 text-white px-3 py-1.5 text-xs font-medium w-52"
+                className="rounded-md bg-white border border-slate-300 text-slate-900 px-2.5 py-1.5 text-xs font-medium w-48"
               />
             </div>
           </div>
@@ -345,34 +356,32 @@ export const AdminDashboard: React.FC = () => {
         {activeRole === 'worker' && (
           <div
             role="alert"
-            className="bg-amber-500/20 border border-amber-400 text-amber-200 px-3.5 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2"
+            className="bg-amber-50 border border-amber-300 text-amber-950 px-3.5 py-2.5 rounded-md text-xs font-medium flex items-center gap-2"
           >
-            <Lock className="w-4 h-4 shrink-0" />
-            <span>
-              RBAC Enforcement Preview: Current role is &apos;worker&apos;. Attempting to assign incidents, resolve hazards, or edit fatigue policies will be rejected by authorization rules. Switch role above to &apos;Administrator&apos; or &apos;Authorized Safety Officer&apos; to execute management actions.
-            </span>
+            <Lock className="w-4 h-4 shrink-0 text-amber-700" />
+            <span>{t.admin.roleRestrictedNotice}</span>
           </div>
         )}
       </header>
 
-      {/* Operational Filters Bar (Section 9) */}
+      {/* Operational Filters Bar */}
       <section
         aria-label="Operational Filters"
-        className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm"
+        className="bg-white rounded-lg border border-slate-200 p-3.5 sm:p-4 shadow-sm"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-slate-900">
-            <Filter className="w-4 h-4 text-navy-700" />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-900">
+            <Filter className="w-4 h-4 text-slate-700" />
             <span>{t.admin.filtersTitle}</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 w-full lg:w-auto flex-1 max-w-4xl">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 w-full lg:w-auto flex-1 max-w-4xl">
             <div>
               <label
                 htmlFor="filter-site"
-                className="block text-[11px] font-bold uppercase text-slate-500 mb-1"
+                className="block text-[11px] font-semibold text-slate-600 mb-1"
               >
-                Worksite / Plant
+                {t.worker.worksiteLabel}
               </label>
               <select
                 id="filter-site"
@@ -381,7 +390,7 @@ export const AdminDashboard: React.FC = () => {
                   setSiteFilter(e.target.value);
                   setDeptFilter('ALL');
                 }}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900"
+                className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-900"
               >
                 <option value="ALL">{t.admin.allSites}</option>
                 {industryConfig.sites.map((s) => (
@@ -395,15 +404,15 @@ export const AdminDashboard: React.FC = () => {
             <div>
               <label
                 htmlFor="filter-dept"
-                className="block text-[11px] font-bold uppercase text-slate-500 mb-1"
+                className="block text-[11px] font-semibold text-slate-600 mb-1"
               >
-                Department
+                {t.worker.departmentLabel}
               </label>
               <select
                 id="filter-dept"
                 value={deptFilter}
                 onChange={(e) => setDeptFilter(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900"
+                className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-900"
               >
                 <option value="ALL">{t.admin.allDepartments}</option>
                 {industryConfig.departments
@@ -419,15 +428,15 @@ export const AdminDashboard: React.FC = () => {
             <div>
               <label
                 htmlFor="filter-shift"
-                className="block text-[11px] font-bold uppercase text-slate-500 mb-1"
+                className="block text-[11px] font-semibold text-slate-600 mb-1"
               >
-                Shift Schedule
+                {t.worker.shiftScheduleLabel}
               </label>
               <select
                 id="filter-shift"
                 value={shiftFilter}
                 onChange={(e) => setShiftFilter(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900"
+                className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-900"
               >
                 <option value="ALL">{t.admin.allShifts}</option>
                 {industryConfig.shifts.map((sh) => (
@@ -441,9 +450,9 @@ export const AdminDashboard: React.FC = () => {
             <div>
               <label
                 htmlFor="filter-date-range"
-                className="block text-[11px] font-bold uppercase text-slate-500 mb-1"
+                className="block text-[11px] font-semibold text-slate-600 mb-1"
               >
-                Date Window
+                {t.admin.dateWindowLabel}
               </label>
               <select
                 id="filter-date-range"
@@ -451,97 +460,97 @@ export const AdminDashboard: React.FC = () => {
                 onChange={(e) =>
                   setDateRangeFilter(e.target.value as 'ALL' | 'LAST_3_DAYS' | 'TODAY')
                 }
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-900"
+                className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-900"
               >
-                <option value="ALL">All Recorded Dates</option>
-                <option value="LAST_3_DAYS">Last 3 Days (Oct 24–27)</option>
-                <option value="TODAY">Recent 24h Window</option>
+                <option value="ALL">{t.admin.dateAll}</option>
+                <option value="LAST_3_DAYS">{t.admin.dateLast3Days}</option>
+                <option value="TODAY">{t.admin.dateToday}</option>
               </select>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Derived KPI Summary Cards */}
+      {/* Derived KPI Summary Strip */}
       <section
         aria-label="Key Operational Metrics"
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5"
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"
       >
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-slate-200 p-3.5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase">{t.admin.activeWorkersCard}</span>
-            <Users className="w-4 h-4 text-navy-700" />
+            <span className="text-xs font-semibold">{t.admin.activeWorkersCard}</span>
+            <Users className="w-4 h-4 text-slate-700" />
           </div>
-          <div data-testid="kpi-active-workers" className="text-2xl font-extrabold text-navy-900">
+          <div data-testid="kpi-active-workers" className="text-2xl font-bold text-slate-900">
             {metrics.activeWorkersCount}
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            {metrics.totalRegularHours}h regular logged
+            {metrics.totalRegularHours}h {t.admin.regularLoggedSub}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-slate-200 p-3.5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase">{t.admin.overtimeHoursCard}</span>
+            <span className="text-xs font-semibold">{t.admin.overtimeHoursCard}</span>
             <Clock className="w-4 h-4 text-amber-600" />
           </div>
-          <div data-testid="kpi-overtime-hours" className="text-2xl font-extrabold text-amber-700">
+          <div data-testid="kpi-overtime-hours" className="text-2xl font-bold text-amber-700">
             {metrics.totalOvertimeHours}h
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            Across {filteredAttendance.length} shift records
+            {filteredAttendance.length} {t.admin.shiftRecordsSub}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-slate-200 p-3.5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase">{t.admin.fatigueFlagsCard}</span>
+            <span className="text-xs font-semibold">{t.admin.fatigueFlagsCard}</span>
             <Activity className="w-4 h-4 text-amber-600" />
           </div>
-          <div data-testid="kpi-fatigue-flags" className="text-2xl font-extrabold text-amber-700">
+          <div data-testid="kpi-fatigue-flags" className="text-2xl font-bold text-amber-700">
             {metrics.unacknowledgedFatigueCount}
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            {filteredFatigueAlerts.length} total rule flags
+            {filteredFatigueAlerts.length} {t.admin.totalRuleFlagsSub}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-slate-200 p-3.5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase">{t.admin.openIncidentsCard}</span>
+            <span className="text-xs font-semibold">{t.admin.openIncidentsCard}</span>
             <AlertTriangle className="w-4 h-4 text-red-600" />
           </div>
-          <div data-testid="kpi-open-incidents" className="text-2xl font-extrabold text-red-700">
+          <div data-testid="kpi-open-incidents" className="text-2xl font-bold text-red-700">
             {metrics.openIncidentsCount}
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            Of {filteredIncidents.length} total reports
+            {filteredIncidents.length} {t.admin.totalReportsSub}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-slate-200 p-3.5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase">{t.admin.highPriorityHazardsCard}</span>
+            <span className="text-xs font-semibold">{t.admin.highPriorityHazardsCard}</span>
             <AlertOctagon className="w-4 h-4 text-red-700" />
           </div>
-          <div data-testid="kpi-high-priority" className="text-2xl font-extrabold text-red-700">
+          <div data-testid="kpi-high-priority" className="text-2xl font-bold text-red-700">
             {metrics.highPriorityOpenCount}
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            Critical / High unresolved
+            {t.admin.criticalHighSub}
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-slate-200 p-3.5 shadow-sm">
           <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-bold uppercase">{t.admin.avgResolutionHoursCard}</span>
+            <span className="text-xs font-semibold">{t.admin.avgResolutionHoursCard}</span>
             <ShieldCheck className="w-4 h-4 text-emerald-700" />
           </div>
-          <div className="text-2xl font-extrabold text-emerald-800">
+          <div className="text-2xl font-bold text-emerald-800">
             {metrics.avgResolutionHours}h
           </div>
           <p className="text-[11px] text-slate-500 mt-0.5">
-            Verified closed reports
+            {t.admin.verifiedClosedSub}
           </p>
         </div>
       </section>
@@ -550,7 +559,7 @@ export const AdminDashboard: React.FC = () => {
         <div
           role="status"
           aria-live="polite"
-          className={`p-4 rounded-xl border text-sm font-semibold flex items-center justify-between ${
+          className={`p-3.5 rounded-md border text-xs sm:text-sm font-semibold flex items-center justify-between ${
             adminActionFeedback.type === 'success'
               ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
               : 'bg-red-50 border-red-300 text-red-950'
@@ -562,7 +571,7 @@ export const AdminDashboard: React.FC = () => {
             onClick={() => setAdminActionFeedback(null)}
             className="text-xs underline ml-4"
           >
-            Dismiss
+            {t.admin.dismissBtn}
           </button>
         </div>
       )}
@@ -570,15 +579,15 @@ export const AdminDashboard: React.FC = () => {
       {/* Admin Sub-Navigation */}
       <nav
         aria-label="Admin Command Sections"
-        className="flex flex-wrap gap-2 border-b border-slate-200 pb-3"
+        className="flex flex-wrap gap-2 border-b border-slate-200 pb-2.5"
       >
         <button
           type="button"
           onClick={() => setSubTab('overview')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition ${
+          className={`px-3.5 py-2 rounded-md text-xs sm:text-sm font-semibold flex items-center gap-1.5 border transition ${
             subTab === 'overview'
-              ? 'bg-navy-900 text-white shadow-sm'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              ? 'bg-slate-900 text-white border-slate-900'
+              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
           }`}
         >
           <BarChart3 className="w-4 h-4" />
@@ -588,23 +597,23 @@ export const AdminDashboard: React.FC = () => {
         <button
           type="button"
           onClick={() => setSubTab('incidents')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition ${
+          className={`px-3.5 py-2 rounded-md text-xs sm:text-sm font-semibold flex items-center gap-1.5 border transition ${
             subTab === 'incidents'
-              ? 'bg-navy-900 text-white shadow-sm'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              ? 'bg-slate-900 text-white border-slate-900'
+              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
           }`}
         >
           <AlertTriangle className="w-4 h-4 text-red-500" />
-          {t.nav.incidentQueue} ({metrics.openIncidentsCount} Open)
+          {t.nav.incidentQueue} ({metrics.openIncidentsCount})
         </button>
 
         <button
           type="button"
           onClick={() => setSubTab('fatigue')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition ${
+          className={`px-3.5 py-2 rounded-md text-xs sm:text-sm font-semibold flex items-center gap-1.5 border transition ${
             subTab === 'fatigue'
-              ? 'bg-navy-900 text-white shadow-sm'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              ? 'bg-slate-900 text-white border-slate-900'
+              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
           }`}
         >
           <Sliders className="w-4 h-4 text-amber-500" />
@@ -614,10 +623,10 @@ export const AdminDashboard: React.FC = () => {
         <button
           type="button"
           onClick={() => setSubTab('risk_engine')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition ${
+          className={`px-3.5 py-2 rounded-md text-xs sm:text-sm font-semibold flex items-center gap-1.5 border transition ${
             subTab === 'risk_engine'
-              ? 'bg-navy-900 text-white shadow-sm'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              ? 'bg-slate-900 text-white border-slate-900'
+              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
           }`}
         >
           <Activity className="w-4 h-4 text-emerald-500" />
@@ -627,197 +636,261 @@ export const AdminDashboard: React.FC = () => {
         <button
           type="button"
           onClick={() => setSubTab('what_if')}
-          className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition ${
+          className={`px-3.5 py-2 rounded-md text-xs sm:text-sm font-semibold flex items-center gap-1.5 border transition ${
             subTab === 'what_if'
-              ? 'bg-navy-900 text-white shadow-sm'
-              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              ? 'bg-slate-900 text-white border-slate-900'
+              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
           }`}
         >
-          <GitCompare className="w-4 h-4 text-blue-500" />
+          <GitCompare className="w-4 h-4 text-sky-500" />
           {t.nav.whatIfSimulator}
         </button>
       </nav>
 
-      {/* SUBTAB 1: COMMAND OVERVIEW (Action Queue + Trend Visualizations + Attendance Exceptions) */}
+      {/* SUBTAB 1: OPERATIONS OVERVIEW */}
       {subTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left 7 Cols: Prioritized Action Queue */}
-          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-bold text-slate-900">
-                  {t.admin.priorityActionQueue}
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Generated deterministically by the FairShift Risk-to-Resolution Engine
-                </p>
-              </div>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-navy-100 text-navy-900">
-                {filteredRiskQueue.length} Action Items
-              </span>
-            </div>
-
-            {filteredRiskQueue.length === 0 ? (
-              <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-300 text-sm text-slate-600">
-                No pending action items match the selected filters.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filteredRiskQueue.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`p-4 rounded-xl border-l-4 border bg-slate-50/70 space-y-1.5 ${
-                      item.urgency === 'IMMEDIATE'
-                        ? 'border-l-red-600 border-red-200'
-                        : item.urgency === 'HIGH'
-                        ? 'border-l-amber-500 border-amber-200'
-                        : 'border-l-navy-600 border-slate-200'
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-[11px] font-extrabold px-2 py-0.5 rounded uppercase ${
-                            item.urgency === 'IMMEDIATE'
-                              ? 'bg-red-700 text-white'
-                              : item.urgency === 'HIGH'
-                              ? 'bg-amber-500 text-slate-950'
-                              : 'bg-slate-200 text-slate-800'
-                          }`}
-                        >
-                          {item.urgency} • Score {item.priorityScore}/100
-                        </span>
-                        <span className="text-xs font-mono text-slate-500">
-                          {item.category}
-                        </span>
-                      </div>
-                      <span className="text-[11px] font-mono text-slate-500">
-                        Refs: {item.sourceRecordIds.join(', ')}
-                      </span>
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">{item.title}</h3>
-                    <p className="text-xs text-slate-700">
-                      <strong>Why Triggered:</strong> {item.whyGenerated}
-                    </p>
-                    <p className="text-xs text-navy-900 bg-navy-50 px-3 py-1.5 rounded-lg border border-navy-200">
-                      <strong>Recommended Next Action:</strong> {item.suggestedAction}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right 5 Cols: Visual Trend Charts & Attendance Exceptions */}
-          <div className="lg:col-span-5 space-y-6">
-            {/* SVG Bar Visualization: Regular vs Overtime Hours by Shift Record */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-              <div>
-                <h2 className="text-base font-bold text-slate-900">
-                  Attendance & Overtime Hours Distribution
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Visualizing recorded shift durations vs {fatiguePolicy.maxShiftHours}h fatigue ceiling
-                </p>
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Left 7 Cols: Prioritized Action Queue */}
+            <div className="lg:col-span-7 bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-sm space-y-3.5">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                <div>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                    {t.admin.priorityActionQueue}
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    {t.admin.priorityActionSubtitle}
+                  </p>
+                </div>
+                <span className="text-xs font-semibold px-2.5 py-1 rounded bg-slate-100 text-slate-800 border border-slate-200">
+                  {filteredRiskQueue.length} {t.admin.actionItemsCount}
+                </span>
               </div>
 
-              {filteredAttendance.length === 0 ? (
-                <p className="text-xs text-slate-500 py-6 text-center">
-                  No attendance records match current filters.
-                </p>
+              {filteredRiskQueue.length === 0 ? (
+                <div className="p-6 text-center bg-slate-50 rounded-md border border-dashed border-slate-300 text-xs sm:text-sm text-slate-600">
+                  {t.admin.noActionItemsEmpty}
+                </div>
               ) : (
-                <div className="space-y-3" role="img" aria-label="Attendance and overtime bar chart">
-                  {filteredAttendance.map((rec) => {
-                    const totalH = roundToTwo(rec.regularHours + rec.overtimeHours);
-                    const regPct = Math.min(100, Math.round((rec.regularHours / 12) * 100));
-                    const otPct = Math.min(100 - regPct, Math.round((rec.overtimeHours / 12) * 100));
-                    return (
-                      <div key={rec.id} className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="font-semibold text-slate-800">
-                            {rec.workerName} ({rec.date})
+                <div className="divide-y divide-slate-200 border border-slate-200 rounded-md">
+                  {filteredRiskQueue.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`p-3.5 bg-white border-l-4 space-y-1.5 ${
+                        item.urgency === 'IMMEDIATE'
+                          ? 'border-l-red-600'
+                          : item.urgency === 'HIGH'
+                          ? 'border-l-amber-500'
+                          : 'border-l-slate-700'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-[11px] font-bold px-2 py-0.5 rounded uppercase ${
+                              item.urgency === 'IMMEDIATE'
+                                ? 'bg-red-700 text-white'
+                                : item.urgency === 'HIGH'
+                                ? 'bg-amber-500 text-slate-950'
+                                : 'bg-slate-200 text-slate-800'
+                            }`}
+                          >
+                            {item.urgency} • {item.priorityScore}/100
                           </span>
-                          <span className="font-mono font-bold text-slate-900">
-                            {rec.status === 'FLAGGED_MISSING_CHECKOUT'
-                              ? 'MISSING CHECK-OUT'
-                              : `${rec.regularHours}h Reg + ${rec.overtimeHours}h OT = ${totalH}h`}
+                          <span className="text-xs font-mono text-slate-500">
+                            {item.category}
                           </span>
                         </div>
-                        <div className="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden flex border border-slate-200">
-                          <div
-                            style={{ width: `${regPct}%` }}
-                            className="bg-navy-800 h-full"
-                            title={`Regular: ${rec.regularHours}h`}
-                          />
-                          <div
-                            style={{ width: `${otPct}%` }}
-                            className="bg-amber-500 h-full"
-                            title={`Overtime: ${rec.overtimeHours}h`}
-                          />
-                        </div>
+                        <span className="text-[11px] font-mono text-slate-500">
+                          {item.sourceRecordIds.join(', ')}
+                        </span>
                       </div>
-                    );
-                  })}
-                  <div className="flex items-center gap-4 pt-2 text-xs text-slate-600">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-sm bg-navy-800 inline-block" /> Regular Hours
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className="w-3 h-3 rounded-sm bg-amber-500 inline-block" /> Overtime Hours
-                    </span>
-                  </div>
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-slate-700">
+                        <strong>{t.admin.whyTriggeredLabel}:</strong> {item.whyGenerated}
+                      </p>
+                      <p className="text-xs text-slate-900 bg-slate-50 px-2.5 py-1.5 rounded border border-slate-200">
+                        <strong>{t.admin.recommendedActionLabel}:</strong> {item.suggestedAction}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Incident Status Breakdown */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
-              <h2 className="text-base font-bold text-slate-900">
-                Hazard Lifecycle Pipeline ({filteredIncidents.length} Total)
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
-                {(['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED'] as IncidentStatus[]).map(
-                  (st) => {
-                    const count = filteredIncidents.filter((i) => i.status === st).length;
-                    return (
-                      <div
-                        key={st}
-                        className="p-3 rounded-xl bg-slate-50 border border-slate-200"
-                      >
-                        <span className="text-[11px] font-bold text-slate-500 block">
-                          {st.replace('_', ' ')}
-                        </span>
-                        <span className="text-xl font-extrabold text-slate-900">
-                          {count}
-                        </span>
-                      </div>
-                    );
-                  }
+            {/* Right 5 Cols: Distribution & Hazard Lifecycle */}
+            <div className="lg:col-span-5 space-y-5">
+              {/* Bar Visualization: Regular vs Overtime Hours */}
+              <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-sm space-y-3.5">
+                <div>
+                  <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                    {t.admin.attendanceChartTitle}
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    {t.admin.attendanceChartSubtitle} ({fatiguePolicy.maxShiftHours}h)
+                  </p>
+                </div>
+
+                {filteredAttendance.length === 0 ? (
+                  <p className="text-xs text-slate-500 py-6 text-center">
+                    {t.admin.noAttendanceEmpty}
+                  </p>
+                ) : (
+                  <div
+                    className="space-y-2.5"
+                    role="img"
+                    aria-label={t.admin.attendanceChartTitle}
+                  >
+                    {filteredAttendance.map((rec) => {
+                      const totalH = roundToTwo(rec.regularHours + rec.overtimeHours);
+                      const regPct = Math.min(100, Math.round((rec.regularHours / 12) * 100));
+                      const otPct = Math.min(
+                        100 - regPct,
+                        Math.round((rec.overtimeHours / 12) * 100)
+                      );
+                      return (
+                        <div key={rec.id} className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="font-medium text-slate-800">
+                              {rec.workerName} ({rec.date})
+                            </span>
+                            <span className="font-mono font-semibold text-slate-900">
+                              {rec.status === 'FLAGGED_MISSING_CHECKOUT'
+                                ? t.attendanceStatuses.FLAGGED_MISSING_CHECKOUT
+                                : `${rec.regularHours}h + ${rec.overtimeHours}h OT = ${totalH}h`}
+                            </span>
+                          </div>
+                          <div className="w-full h-3 bg-slate-100 rounded overflow-hidden flex border border-slate-200">
+                            <div
+                              style={{ width: `${regPct}%` }}
+                              className="bg-slate-800 h-full"
+                              title={`${t.worker.recordedRegularHours}: ${rec.regularHours}h`}
+                            />
+                            <div
+                              style={{ width: `${otPct}%` }}
+                              className="bg-amber-500 h-full"
+                              title={`${t.worker.recordedOvertimeHours}: ${rec.overtimeHours}h`}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="flex items-center gap-4 pt-2 text-xs text-slate-600">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="w-3 h-3 rounded-sm bg-slate-800 inline-block" />{' '}
+                        {t.worker.recordedRegularHours}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="w-3 h-3 rounded-sm bg-amber-500 inline-block" />{' '}
+                        {t.worker.recordedOvertimeHours}
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
+
+              {/* Incident Status Breakdown */}
+              <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-sm space-y-3">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                  {t.admin.lifecyclePipelineTitle} ({filteredIncidents.length})
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                  {(['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED'] as IncidentStatus[]).map(
+                    (st) => {
+                      const count = filteredIncidents.filter((i) => i.status === st).length;
+                      return (
+                        <div
+                          key={st}
+                          className="p-2.5 rounded-md bg-slate-50 border border-slate-200"
+                        >
+                          <span className="text-[11px] font-semibold text-slate-600 block">
+                            {t.statuses[st]}
+                          </span>
+                          <span className="text-xl font-bold text-slate-900">{count}</span>
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Structured Workforce Attendance & Overtime Register Table */}
+          <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-sm space-y-3">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900">
+              {t.admin.workforceAttendanceTableTitle} ({filteredAttendance.length})
+            </h2>
+            <div className="overflow-x-auto border border-slate-200 rounded-md">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold">
+                    <th className="py-2.5 px-3">ID</th>
+                    <th className="py-2.5 px-3">{t.admin.activeWorkersCard}</th>
+                    <th className="py-2.5 px-3">{t.admin.dateWindowLabel}</th>
+                    <th className="py-2.5 px-3">{t.worker.recordedRegularHours}</th>
+                    <th className="py-2.5 px-3">{t.worker.recordedOvertimeHours}</th>
+                    <th className="py-2.5 px-3">{t.admin.lifecyclePipelineTitle}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredAttendance.map((rec) => (
+                    <tr key={rec.id} className="hover:bg-slate-50/80">
+                      <td className="py-2.5 px-3 font-mono font-medium text-slate-700">
+                        {rec.id}
+                      </td>
+                      <td className="py-2.5 px-3 font-semibold text-slate-900">
+                        {rec.workerName}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-slate-600">{rec.date}</td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-slate-900">
+                        {rec.regularHours}h
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-semibold text-amber-800">
+                        +{rec.overtimeHours}h
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold border ${
+                            rec.status === 'COMPLETED'
+                              ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+                              : rec.status === 'ACTIVE'
+                              ? 'bg-sky-50 text-sky-900 border-sky-200'
+                              : 'bg-amber-50 text-amber-900 border-amber-200'
+                          }`}
+                        >
+                          {t.attendanceStatuses[rec.status]}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       )}
 
-      {/* SUBTAB 2: INCIDENT RESOLUTION QUEUE & WORKFLOW (Section 6) */}
+      {/* SUBTAB 2: SAFETY INCIDENT RESOLUTION QUEUE */}
       {subTab === 'incidents' && (
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">
-              SafeVoice Hazard Resolution Queue ({filteredIncidents.length})
+          <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-sm">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">
+              {t.admin.incidentQueueHeading} ({filteredIncidents.length})
             </h2>
-            <p className="text-xs text-slate-600">
-              Permitted lifecycle: <strong>OPEN → ASSIGNED → IN_PROGRESS → RESOLVED</strong>. High-severity reports are sorted to the top. Anonymous reports redact worker identity.
+            <p className="text-xs text-slate-600 mt-0.5">
+              {t.admin.incidentQueueSubtitle}
             </p>
           </div>
 
           {filteredIncidents.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">
-              No safety incidents match the current filters.
+            <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-xs sm:text-sm text-slate-500">
+              {t.admin.noIncidentsEmpty}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {filteredIncidents.map((inc) => {
                 const defaultOfficer =
                   industryConfig.safetyOfficers[0]?.name || 'Er. Karthikeyan Subramanian';
@@ -831,23 +904,23 @@ export const AdminDashboard: React.FC = () => {
                 return (
                   <div
                     key={inc.id}
-                    className={`bg-white rounded-2xl border-2 p-5 shadow-sm space-y-4 ${
+                    className={`bg-white rounded-lg border p-4 sm:p-5 shadow-sm space-y-3.5 ${
                       inc.severity === 'CRITICAL' && inc.status !== 'RESOLVED'
-                        ? 'border-red-500'
+                        ? 'border-red-500 border-l-4'
                         : 'border-slate-200'
                     }`}
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-mono text-xs font-bold bg-navy-900 text-white px-2.5 py-1 rounded">
+                          <span className="font-mono text-xs font-bold bg-slate-900 text-white px-2 py-0.5 rounded">
                             {inc.id}
                           </span>
                           <span className="font-mono text-xs bg-slate-100 border border-slate-300 px-2 py-0.5 rounded text-slate-700">
-                            Tracking: {inc.trackingCode}
+                            {inc.trackingCode}
                           </span>
                           <span
-                            className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${
+                            className={`text-xs font-bold px-2 py-0.5 rounded ${
                               inc.severity === 'CRITICAL'
                                 ? 'bg-red-700 text-white'
                                 : inc.severity === 'HIGH'
@@ -855,29 +928,31 @@ export const AdminDashboard: React.FC = () => {
                                 : 'bg-amber-100 text-amber-900'
                             }`}
                           >
-                            {inc.severity}
+                            {t.severities[inc.severity]}
                           </span>
                           <span className="text-xs text-slate-500">
-                            Reported via {inc.reportedVia} •{' '}
+                            {inc.reportedVia} •{' '}
                             {inc.isAnonymous
-                              ? 'Anonymous Reporter (Identity Redacted)'
-                              : `Worker: ${inc.workerName} (${inc.workerId})`}
+                              ? t.worker.anonymousReporterValue
+                              : `${inc.workerName} (${inc.workerId})`}
                           </span>
                         </div>
-                        <h3 className="text-base font-bold text-slate-900">{inc.title}</h3>
-                        <p className="text-sm text-slate-700">{inc.description}</p>
+                        <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                          {inc.title}
+                        </h3>
+                        <p className="text-xs sm:text-sm text-slate-700">{inc.description}</p>
                       </div>
 
                       <span
                         data-testid={`incident-status-${inc.id}`}
-                        className={`text-xs font-extrabold px-3.5 py-1.5 rounded-full uppercase ${
+                        className={`text-xs font-bold px-3 py-1 rounded uppercase border ${
                           inc.status === 'RESOLVED'
-                            ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                            ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
                             : inc.status === 'IN_PROGRESS'
-                            ? 'bg-blue-100 text-blue-900 border border-blue-300'
+                            ? 'bg-sky-50 text-sky-900 border-sky-300'
                             : inc.status === 'ASSIGNED'
-                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                            : 'bg-red-100 text-red-900 border border-red-300'
+                            ? 'bg-amber-50 text-amber-900 border-amber-300'
+                            : 'bg-red-50 text-red-900 border-red-300'
                         }`}
                       >
                         {inc.status}
@@ -886,15 +961,15 @@ export const AdminDashboard: React.FC = () => {
 
                     {/* Workflow Action Controls based on current status */}
                     {inc.status !== 'RESOLVED' && (
-                      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                      <div className="bg-slate-50 p-3.5 rounded-md border border-slate-200 space-y-3">
                         {inc.status === 'OPEN' && (
                           <div className="flex flex-col sm:flex-row sm:items-end gap-3">
                             <div className="flex-1">
                               <label
                                 htmlFor={`assign-select-${inc.id}`}
-                                className="block text-xs font-bold uppercase text-slate-700 mb-1"
+                                className="block text-xs font-semibold text-slate-700 mb-1"
                               >
-                                Step 1: Assign Authorized Safety Officer
+                                {t.admin.step1AssignLabel}
                               </label>
                               <select
                                 id={`assign-select-${inc.id}`}
@@ -905,7 +980,7 @@ export const AdminDashboard: React.FC = () => {
                                     [inc.id]: e.target.value,
                                   }))
                                 }
-                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900"
+                                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-medium text-slate-900"
                               >
                                 {industryConfig.safetyOfficers.map((so) => (
                                   <option key={so.id} value={so.name}>
@@ -918,7 +993,7 @@ export const AdminDashboard: React.FC = () => {
                               type="button"
                               data-testid={`assign-btn-${inc.id}`}
                               onClick={() => handleIncidentTransition(inc.id, 'ASSIGNED')}
-                              className="px-4 py-2.5 rounded-xl bg-navy-900 hover:bg-navy-800 text-white text-xs font-bold uppercase tracking-wide shrink-0"
+                              className="px-4 py-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shrink-0"
                             >
                               {t.admin.assignOfficerBtn} (OPEN → ASSIGNED)
                             </button>
@@ -926,13 +1001,13 @@ export const AdminDashboard: React.FC = () => {
                         )}
 
                         {inc.status === 'ASSIGNED' && (
-                          <div className="space-y-3">
+                          <div className="space-y-2.5">
                             <div>
                               <label
                                 htmlFor={`corrective-input-${inc.id}`}
-                                className="block text-xs font-bold uppercase text-slate-700 mb-1"
+                                className="block text-xs font-semibold text-slate-700 mb-1"
                               >
-                                Step 2: Record Physical Corrective Action (Assigned to {inc.assignedTo})
+                                {t.admin.step2CorrectiveLabel} ({inc.assignedTo})
                               </label>
                               <input
                                 id={`corrective-input-${inc.id}`}
@@ -944,32 +1019,33 @@ export const AdminDashboard: React.FC = () => {
                                     [inc.id]: e.target.value,
                                   }))
                                 }
-                                placeholder="e.g., Barricaded bay, replaced ledger clamps and installed outer guardrail..."
-                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                placeholder={t.admin.correctivePlaceholder}
+                                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900"
                               />
                             </div>
                             <button
                               type="button"
                               data-testid={`progress-btn-${inc.id}`}
                               onClick={() => handleIncidentTransition(inc.id, 'IN_PROGRESS')}
-                              className="px-4 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold uppercase tracking-wide"
+                              className="px-4 py-2 rounded-md bg-sky-700 hover:bg-sky-800 text-white text-xs font-semibold"
                             >
-                              Log Corrective Action (ASSIGNED → IN_PROGRESS)
+                              {t.admin.logCorrectiveBtn} (ASSIGNED → IN_PROGRESS)
                             </button>
                           </div>
                         )}
 
                         {inc.status === 'IN_PROGRESS' && (
-                          <div className="space-y-3">
+                          <div className="space-y-2.5">
                             <p className="text-xs text-slate-700">
-                              <strong>Active Corrective Action:</strong> {inc.correctiveAction}
+                              <strong>{t.worker.correctiveActionLabel}:</strong>{' '}
+                              {inc.correctiveAction}
                             </p>
                             <div>
                               <label
                                 htmlFor={`resolution-input-${inc.id}`}
-                                className="block text-xs font-bold uppercase text-slate-700 mb-1"
+                                className="block text-xs font-semibold text-slate-700 mb-1"
                               >
-                                Step 3: Record Final Inspection & Resolution Verification Notes
+                                {t.admin.step3ResolutionLabel}
                               </label>
                               <input
                                 id={`resolution-input-${inc.id}`}
@@ -981,15 +1057,15 @@ export const AdminDashboard: React.FC = () => {
                                     [inc.id]: e.target.value,
                                   }))
                                 }
-                                placeholder="e.g., Load-tested scaffold bay and signed off safe for shift operations..."
-                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                                placeholder={t.admin.resolutionPlaceholder}
+                                className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm text-slate-900"
                               />
                             </div>
                             <button
                               type="button"
                               data-testid={`resolve-btn-${inc.id}`}
                               onClick={() => handleIncidentTransition(inc.id, 'RESOLVED')}
-                              className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold uppercase tracking-wide"
+                              className="px-4 py-2 rounded-md bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold"
                             >
                               {t.admin.recordResolutionBtn} (IN_PROGRESS → RESOLVED)
                             </button>
@@ -999,17 +1075,19 @@ export const AdminDashboard: React.FC = () => {
                     )}
 
                     {/* Audit Trail History */}
-                    <div className="border-t border-slate-100 pt-3 space-y-1.5">
-                      <span className="text-xs font-bold uppercase text-slate-500 flex items-center gap-1">
-                        <History className="w-3.5 h-3.5" /> Resolution Audit History ({inc.history.length})
+                    <div className="border-t border-slate-100 pt-2.5 space-y-1.5">
+                      <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
+                        <History className="w-3.5 h-3.5" /> {t.admin.auditHistoryLabel} (
+                        {inc.history.length})
                       </span>
                       <div className="space-y-1">
                         {inc.history.map((h, i) => (
                           <div
                             key={i}
-                            className="text-xs text-slate-600 font-mono bg-slate-50 px-3 py-1.5 rounded border border-slate-200/80"
+                            className="text-xs text-slate-600 font-mono bg-slate-50 px-2.5 py-1 rounded border border-slate-200"
                           >
-                            [{h.timestamp.slice(0, 16).replace('T', ' ')}] <strong>{h.actorName}</strong> ({h.actorRole}): {h.note}
+                            [{h.timestamp.slice(0, 16).replace('T', ' ')}]{' '}
+                            <strong>{h.actorName}</strong> ({h.actorRole}): {h.note}
                           </div>
                         ))}
                       </div>
@@ -1022,29 +1100,29 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* SUBTAB 3: EXPLAINABLE FATIGUE ALERTS & CONFIGURABLE THRESHOLDS (Section 8) */}
+      {/* SUBTAB 3: FATIGUE & HOURS ALERTS */}
       {subTab === 'fatigue' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           {/* Configurable Policy Rules Form */}
           <form
             onSubmit={handleSavePolicy}
-            className="lg:col-span-4 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4 h-fit"
+            className="lg:col-span-4 bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-sm space-y-3.5 h-fit"
           >
             <div>
-              <h2 className="text-base font-bold text-slate-900">
-                Configurable Fatigue Rule Thresholds
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                {t.admin.fatigueThresholdsTitle}
               </h2>
               <p className="text-xs text-slate-600 mt-0.5">
-                Adjust deterministic thresholds below. Advisory only — flags trigger supervisor welfare review, never automated worker penalties or medical claims.
+                {t.admin.fatigueThresholdsSubtitle}
               </p>
             </div>
 
             <div>
               <label
                 htmlFor="policy-max-shift"
-                className="block text-xs font-bold uppercase text-slate-700 mb-1"
+                className="block text-xs font-semibold text-slate-700 mb-1"
               >
-                Max Single-Shift Hours Limit
+                {t.admin.maxShiftHoursLabel}
               </label>
               <input
                 id="policy-max-shift"
@@ -1054,16 +1132,16 @@ export const AdminDashboard: React.FC = () => {
                 step={0.5}
                 value={policyMaxShift}
                 onChange={(e) => setPolicyMaxShift(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold"
               />
             </div>
 
             <div>
               <label
                 htmlFor="policy-min-rest"
-                className="block text-xs font-bold uppercase text-slate-700 mb-1"
+                className="block text-xs font-semibold text-slate-700 mb-1"
               >
-                Min Inter-Shift Rest Hours
+                {t.admin.minRestHoursLabel}
               </label>
               <input
                 id="policy-min-rest"
@@ -1073,16 +1151,16 @@ export const AdminDashboard: React.FC = () => {
                 step={0.5}
                 value={policyMinRest}
                 onChange={(e) => setPolicyMinRest(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold"
               />
             </div>
 
             <div>
               <label
                 htmlFor="policy-repeated-ot"
-                className="block text-xs font-bold uppercase text-slate-700 mb-1"
+                className="block text-xs font-semibold text-slate-700 mb-1"
               >
-                Repeated Overtime Shifts Threshold
+                {t.admin.repeatedOtThresholdLabel}
               </label>
               <input
                 id="policy-repeated-ot"
@@ -1092,16 +1170,16 @@ export const AdminDashboard: React.FC = () => {
                 step={1}
                 value={policyRepeatedOt}
                 onChange={(e) => setPolicyRepeatedOt(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold"
               />
             </div>
 
             <div>
               <label
                 htmlFor="policy-max-consecutive"
-                className="block text-xs font-bold uppercase text-slate-700 mb-1"
+                className="block text-xs font-semibold text-slate-700 mb-1"
               >
-                Max Consecutive Shifts Without Rest Day
+                {t.admin.maxConsecutiveDaysLabel}
               </label>
               <input
                 id="policy-max-consecutive"
@@ -1111,69 +1189,73 @@ export const AdminDashboard: React.FC = () => {
                 step={1}
                 value={policyMaxConsecutive}
                 onChange={(e) => setPolicyMaxConsecutive(Number(e.target.value))}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-bold"
+                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 px-4 rounded-xl bg-navy-900 hover:bg-navy-800 text-white text-xs font-bold uppercase tracking-wider"
+              className="w-full py-2.5 px-4 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold"
             >
-              Apply Threshold Policy & Re-Evaluate
+              {t.admin.applyPolicyBtn}
             </button>
           </form>
 
           {/* Explainable Fatigue Alerts List */}
-          <div className="lg:col-span-8 space-y-4">
+          <div className="lg:col-span-8 space-y-3.5">
             {filteredFatigueAlerts.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-sm text-slate-500">
-                No fatigue alerts triggered under the current threshold configuration.
+              <div className="bg-white rounded-lg border border-slate-200 p-8 text-center text-xs sm:text-sm text-slate-500">
+                {t.admin.noFatigueAlertsEmpty}
               </div>
             ) : (
               filteredFatigueAlerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className={`bg-white rounded-2xl border-2 p-5 shadow-sm space-y-3 ${
-                    alert.acknowledged ? 'border-slate-200 opacity-85' : 'border-amber-400'
+                  className={`bg-white rounded-lg border p-4 sm:p-5 shadow-sm space-y-2.5 ${
+                    alert.acknowledged
+                      ? 'border-slate-200 opacity-85'
+                      : 'border-amber-400 border-l-4'
                   }`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span
-                        className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${
+                        className={`text-xs font-bold px-2 py-0.5 rounded ${
                           alert.severity === 'HIGH'
                             ? 'bg-red-100 text-red-900'
                             : 'bg-amber-100 text-amber-900'
                         }`}
                       >
-                        {alert.severity} FATIGUE FLAG
+                        {alert.severity}
                       </span>
                       <span className="font-mono text-xs text-slate-500">
-                        Rule: {alert.ruleCode}
+                        {alert.ruleCode}
                       </span>
                     </div>
-                    <span className="text-xs font-mono bg-slate-100 px-2.5 py-1 rounded text-slate-800">
-                      Observed: <strong>{alert.triggeredValue}</strong> vs Limit:{' '}
-                      <strong>{alert.thresholdValue}</strong>
+                    <span className="text-xs font-mono bg-slate-100 px-2.5 py-0.5 rounded text-slate-800 border border-slate-200">
+                      {t.admin.observedLabel}: <strong>{alert.triggeredValue}</strong> /{' '}
+                      {t.admin.limitLabel}: <strong>{alert.thresholdValue}</strong>
                     </span>
                   </div>
 
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900">
                     {alert.workerName} — {alert.title}
                   </h3>
                   <p className="text-xs text-slate-700 leading-relaxed">{alert.explanation}</p>
                   <p className="text-xs font-mono text-slate-500">
-                    Relevant Attendance Record IDs: {alert.relevantRecordIds.join(', ')}
+                    IDs: {alert.relevantRecordIds.join(', ')}
                   </p>
 
                   {alert.acknowledged ? (
-                    <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-950">
+                    <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-md text-xs text-emerald-950">
                       <CheckCircle2 className="w-4 h-4 inline mr-1.5 text-emerald-700" />
-                      <strong>Acknowledged by {alert.acknowledgedBy}:</strong>{' '}
+                      <strong>
+                        {t.admin.acknowledgedByLabel} {alert.acknowledgedBy}:
+                      </strong>{' '}
                       {alert.followUpNotes}
                     </div>
                   ) : (
-                    <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-2.5">
+                    <div className="bg-slate-50 p-3 rounded-md border border-slate-200 flex flex-col sm:flex-row gap-2">
                       <input
                         type="text"
                         aria-label={`Follow-up note for ${alert.id}`}
@@ -1184,13 +1266,13 @@ export const AdminDashboard: React.FC = () => {
                             [alert.id]: e.target.value,
                           }))
                         }
-                        placeholder="Document supervisor follow-up (e.g., Mandatory 14h rest scheduled before next shift)..."
-                        className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900"
+                        placeholder={t.admin.followUpPlaceholder}
+                        className="flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900"
                       />
                       <button
                         type="button"
                         onClick={() => handleAcknowledgeAlert(alert.id)}
-                        className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0"
+                        className="px-3.5 py-1.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shrink-0"
                       >
                         {t.admin.acknowledgeAlertBtn}
                       </button>
@@ -1203,36 +1285,33 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* SUBTAB 4: FAIRSHIFT RISK-TO-RESOLUTION ENGINE & PAYROLL RECONCILIATION (Section 10) */}
+      {/* SUBTAB 4: RISK & PAYROLL AUDIT */}
       {subTab === 'risk_engine' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <div className="space-y-5">
+          <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-sm space-y-3.5">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">
-                FairShift Risk-to-Resolution Engine (Deterministic Rule Correlation)
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                {t.admin.riskEngineHeading}
               </h2>
-              <p className="text-xs text-slate-600">
-                Connects unresolved safety hazards, recurring department clusters, fatigue violations, missing check-outs, and wage/hours discrepancies using transparent scoring formulas.
-              </p>
+              <p className="text-xs text-slate-600">{t.admin.riskEngineSubtitle}</p>
             </div>
 
-            <div className="space-y-3">
+            <div className="divide-y divide-slate-200 border border-slate-200 rounded-md">
               {filteredRiskQueue.map((item) => (
-                <div
-                  key={item.id}
-                  className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2"
-                >
+                <div key={item.id} className="p-3.5 bg-white space-y-1.5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-bold text-sm text-navy-900">{item.title}</span>
-                    <span className="font-mono text-xs bg-white border border-slate-300 px-2.5 py-0.5 rounded font-semibold text-slate-800">
-                      Formula: {item.scoreBreakdown}
+                    <span className="font-bold text-xs sm:text-sm text-slate-900">
+                      {item.title}
+                    </span>
+                    <span className="font-mono text-xs bg-slate-100 border border-slate-300 px-2 py-0.5 rounded font-medium text-slate-800">
+                      {t.admin.formulaLabel}: {item.scoreBreakdown}
                     </span>
                   </div>
                   <p className="text-xs text-slate-700">
-                    <strong>Deterministic Explanation:</strong> {item.whyGenerated}
+                    <strong>{t.admin.whyTriggeredLabel}:</strong> {item.whyGenerated}
                   </p>
-                  <p className="text-xs text-emerald-950 bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg">
-                    <strong>Actionable Resolution Step:</strong> {item.suggestedAction}
+                  <p className="text-xs text-emerald-950 bg-emerald-50 border border-emerald-200 p-2 rounded">
+                    <strong>{t.admin.recommendedActionLabel}:</strong> {item.suggestedAction}
                   </p>
                 </div>
               ))}
@@ -1240,25 +1319,22 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Payroll vs Recorded Attendance Reconciliation */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-slate-900">
-              SmartShift Recorded Hours vs. Payroll Register Audit ({filteredDiscrepancies.length})
+          <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-sm space-y-3.5">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900">
+              {t.admin.payrollAuditHeading} ({filteredDiscrepancies.length})
             </h3>
-            <div className="space-y-3">
+            <div className="divide-y divide-slate-200 border border-slate-200 rounded-md">
               {filteredDiscrepancies.map((disc) => (
-                <div
-                  key={disc.id}
-                  className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2"
-                >
+                <div key={disc.id} className="p-3.5 bg-white space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-bold text-sm text-slate-900">
+                    <span className="font-bold text-xs sm:text-sm text-slate-900">
                       {disc.workerName} — {disc.periodLabel}
                     </span>
                     <span
-                      className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                      className={`text-xs font-semibold px-2 py-0.5 rounded border ${
                         disc.status === 'DISCREPANCY_FLAGGED'
-                          ? 'bg-red-100 text-red-900'
-                          : 'bg-emerald-100 text-emerald-900'
+                          ? 'bg-red-50 text-red-900 border-red-200'
+                          : 'bg-emerald-50 text-emerald-900 border-emerald-200'
                       }`}
                     >
                       {disc.status}
@@ -1266,11 +1342,15 @@ export const AdminDashboard: React.FC = () => {
                   </div>
                   <p className="text-xs text-slate-700">{disc.explanation}</p>
                   <div className="text-xs font-mono text-slate-600">
-                    Recorded Gross: {formatInr(disc.recordedGrossInr)} ({disc.recordedRegularHours}h Reg + {disc.recordedOvertimeHours}h OT) • Payroll Entry: {formatInr(disc.payrollGrossInr)} ({disc.payrollRegularHours}h Reg + {disc.payrollOvertimeHours}h OT) • Variance: {formatInr(disc.differenceInr)}
+                    {t.worker.recordedGrossLabel}: {formatInr(disc.recordedGrossInr)} (
+                    {disc.recordedRegularHours}h + {disc.recordedOvertimeHours}h OT) •{' '}
+                    {t.worker.payrollSheetLabel}: {formatInr(disc.payrollGrossInr)} (
+                    {disc.payrollRegularHours}h + {disc.payrollOvertimeHours}h OT) • Δ:{' '}
+                    {formatInr(disc.differenceInr)}
                   </div>
 
                   {disc.status === 'DISCREPANCY_FLAGGED' && (
-                    <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                    <div className="flex flex-col sm:flex-row gap-2 pt-1.5">
                       <input
                         type="text"
                         value={reconcileNotes[disc.id] || ''}
@@ -1280,8 +1360,8 @@ export const AdminDashboard: React.FC = () => {
                             [disc.id]: e.target.value,
                           }))
                         }
-                        placeholder="Enter payroll correction reference (e.g., Added missing OT hours to supplementary payout)..."
-                        className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs"
+                        placeholder={t.admin.reconcilePlaceholder}
+                        className="flex-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs"
                       />
                       <button
                         type="button"
@@ -1289,7 +1369,7 @@ export const AdminDashboard: React.FC = () => {
                           const res = resolvePayrollDiscrepancy(
                             disc.id,
                             reconcileNotes[disc.id] ||
-                              'Approved supplementary overtime adjustment matching SmartShift log.'
+                              'Approved supplementary overtime adjustment matching attendance log.'
                           );
                           if (!res.ok) {
                             setAdminActionFeedback({
@@ -1299,13 +1379,13 @@ export const AdminDashboard: React.FC = () => {
                           } else {
                             setAdminActionFeedback({
                               type: 'success',
-                              message: `Payroll discrepancy ${disc.id} marked reconciled.`,
+                              message: `${disc.id}: ${t.admin.approveReconcileBtn}.`,
                             });
                           }
                         }}
-                        className="px-3.5 py-1.5 rounded-xl bg-navy-900 text-white text-xs font-bold"
+                        className="px-3.5 py-1.5 rounded-md bg-slate-900 text-white text-xs font-semibold"
                       >
-                        Approve Overtime Reconciliation
+                        {t.admin.approveReconcileBtn}
                       </button>
                     </div>
                   )}
@@ -1316,32 +1396,34 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* SUBTAB 5: OPTIONAL DIFFERENTIATOR — FAIRSHIFT WHAT-IF SIMULATOR (Section 11) */}
+      {/* SUBTAB 5: WHAT-IF SHIFT SCHEDULE SIMULATOR */}
       {subTab === 'what_if' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <div className="space-y-5">
+          <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-5 shadow-sm space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  FairShift What-If Shift Schedule Simulator (Advisory Comparison)
+                <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                  {t.admin.whatIfHeading}
                 </h2>
-                <p className="text-xs text-slate-600">
-                  Compare two proposed weekly shift plans before publishing. Evaluates projected overtime, inter-shift rest violations, consecutive-shift flags, and daily staffing coverage. (Does not automatically overwrite live schedules.)
-                </p>
+                <p className="text-xs text-slate-600">{t.admin.whatIfSubtitle}</p>
               </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-900">
-                Recommended: {whatIfComparison.recommendedPlanId === whatIfComparison.planA.planId ? whatIfComparison.planA.planName : whatIfComparison.planB.planName}
+              <span className="text-xs font-semibold px-2.5 py-1 rounded bg-emerald-50 border border-emerald-200 text-emerald-900">
+                {t.admin.recommendedBadge}:{' '}
+                {whatIfComparison.recommendedPlanId === whatIfComparison.planA.planId
+                  ? whatIfComparison.planA.planName
+                  : whatIfComparison.planB.planName}
               </span>
             </div>
 
             {/* Interactive What-If Shift Length Adjusters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-3.5 rounded-md border border-slate-200">
               <div>
                 <label
                   htmlFor="sim-plan-a-delta"
-                  className="block text-xs font-bold text-slate-700 mb-1"
+                  className="block text-xs font-semibold text-slate-700 mb-1"
                 >
-                  Adjust {whatIfComparison.planA.planName} Daily Shift Hours ({planAExtraHours >= 0 ? `+${planAExtraHours}h` : `${planAExtraHours}h`})
+                  {whatIfComparison.planA.planName} (
+                  {planAExtraHours >= 0 ? `+${planAExtraHours}h` : `${planAExtraHours}h`})
                 </label>
                 <input
                   id="sim-plan-a-delta"
@@ -1357,9 +1439,10 @@ export const AdminDashboard: React.FC = () => {
               <div>
                 <label
                   htmlFor="sim-plan-b-delta"
-                  className="block text-xs font-bold text-slate-700 mb-1"
+                  className="block text-xs font-semibold text-slate-700 mb-1"
                 >
-                  Adjust {whatIfComparison.planB.planName} Daily Shift Hours ({planBExtraHours >= 0 ? `+${planBExtraHours}h` : `${planBExtraHours}h`})
+                  {whatIfComparison.planB.planName} (
+                  {planBExtraHours >= 0 ? `+${planBExtraHours}h` : `${planBExtraHours}h`})
                 </label>
                 <input
                   id="sim-plan-b-delta"
@@ -1374,49 +1457,60 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Side-by-Side Comparison Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Side-by-Side Comparison Panels */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[whatIfComparison.planA, whatIfComparison.planB].map((plan) => {
                 const isRec = plan.planId === whatIfComparison.recommendedPlanId;
                 return (
                   <div
                     key={plan.planId}
-                    className={`rounded-2xl border-2 p-5 space-y-3 ${
+                    className={`rounded-lg border p-4 space-y-3 ${
                       isRec
-                        ? 'border-emerald-600 bg-emerald-50/30'
+                        ? 'border-emerald-600 bg-emerald-50/20'
                         : 'border-slate-200 bg-white'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-base text-slate-900">{plan.planName}</h3>
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-bold text-sm sm:text-base text-slate-900">
+                        {plan.planName}
+                      </h3>
                       {isRec && (
-                        <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-700 text-white">
-                          RECOMMENDED PLAN
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-700 text-white">
+                          {t.admin.recommendedBadge}
                         </span>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2.5 text-xs">
-                      <div className="p-2.5 rounded-lg bg-white border border-slate-200">
-                        <span className="text-slate-500 block">Total Rule Violations</span>
-                        <span className="text-lg font-extrabold text-slate-900">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="p-2.5 rounded bg-white border border-slate-200">
+                        <span className="text-slate-500 block">
+                          {t.admin.totalViolationsLabel}
+                        </span>
+                        <span className="text-lg font-bold text-slate-900">
                           {plan.totalRuleViolations}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-white border border-slate-200">
-                        <span className="text-slate-500 block">Projected Overtime</span>
-                        <span className="text-lg font-extrabold text-amber-700">
-                          {plan.projectedOvertimeHours} hrs
+                      <div className="p-2.5 rounded bg-white border border-slate-200">
+                        <span className="text-slate-500 block">
+                          {t.admin.projectedOvertimeLabel}
+                        </span>
+                        <span className="text-lg font-bold text-amber-700">
+                          {plan.projectedOvertimeHours}h
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-white border border-slate-200">
-                        <span className="text-slate-500 block">Rest Violations (&lt;{fatiguePolicy.minRestHoursBetweenShifts}h)</span>
+                      <div className="p-2.5 rounded bg-white border border-slate-200">
+                        <span className="text-slate-500 block">
+                          {t.admin.restViolationsLabel} (&lt;
+                          {fatiguePolicy.minRestHoursBetweenShifts}h)
+                        </span>
                         <span className="text-base font-bold text-slate-900">
                           {plan.restViolationCount}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded-lg bg-white border border-slate-200">
-                        <span className="text-slate-500 block">Consecutive-Shift Flags</span>
+                      <div className="p-2.5 rounded bg-white border border-slate-200">
+                        <span className="text-slate-500 block">
+                          {t.admin.consecutiveFlagsLabel}
+                        </span>
                         <span className="text-base font-bold text-slate-900">
                           {plan.consecutiveShiftFlags}
                         </span>
@@ -1424,11 +1518,11 @@ export const AdminDashboard: React.FC = () => {
                     </div>
 
                     {plan.violationDetails.length === 0 ? (
-                      <p className="text-xs text-emerald-800 font-semibold bg-emerald-100/70 p-2.5 rounded-lg">
-                        Zero fatigue, rest-period, or staffing coverage violations detected!
+                      <p className="text-xs text-emerald-800 font-medium bg-emerald-50 border border-emerald-200 p-2.5 rounded">
+                        {t.admin.zeroViolationsMsg}
                       </p>
                     ) : (
-                      <div className="space-y-1 max-h-40 overflow-y-auto text-xs text-red-900 bg-red-50 p-3 rounded-lg border border-red-200">
+                      <div className="space-y-1 max-h-40 overflow-y-auto text-xs text-red-900 bg-red-50 p-2.5 rounded border border-red-200">
                         {plan.violationDetails.map((v, i) => (
                           <p key={i}>• {v}</p>
                         ))}
@@ -1439,11 +1533,13 @@ export const AdminDashboard: React.FC = () => {
               })}
             </div>
 
-            <div className="bg-navy-900 text-white p-4 rounded-xl space-y-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300">
-                Deterministic Recommendation Explanation
+            <div className="bg-slate-900 text-white p-4 rounded-lg space-y-1.5">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+                {t.admin.recommendationHeading}
               </h4>
-              <p className="text-sm font-semibold">{whatIfComparison.comparisonSummary}</p>
+              <p className="text-xs sm:text-sm font-semibold">
+                {whatIfComparison.comparisonSummary}
+              </p>
               <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
                 {whatIfComparison.reasons.map((r, i) => (
                   <li key={i}>{r}</li>
