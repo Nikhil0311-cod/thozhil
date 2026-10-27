@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdminOrSafetyOfficer() {
+      return isSignedIn() && (userRole() == 'admin' || userRole() == 'safety_officer');
+    }
+
+    // Worker profiles: workers can read their own profile; admins can read all
+    match /workers/{workerId} {
+      allow read: if isSignedIn() && (request.auth.uid == workerId || isAdminOrSafetyOfficer());
+      allow write: if isAdminOrSafetyOfficer();
+    }
+
+    // Attendance records: workers can create/update their own shift check-in/out; admins can review/flag
+    match /attendance/{recordId} {
+      allow read: if isSignedIn() && (resource.data.workerId == request.auth.uid || isAdminOrSafetyOfficer());
+      allow create: if isSignedIn()
+        && request.resource.data.workerId == request.auth.uid
+        && request.resource.data.checkInAt is string;
+      allow update: if isSignedIn() && (
+        (resource.data.workerId == request.auth.uid && resource.data.status == 'ACTIVE') ||
+        isAdminOrSafetyOfficer()
+      );
+      allow delete: if false; // Never silently delete attendance records
+    }
+
+    // Incident reports: workers can submit (including anonymous where workerId == null);
+    // only admins/safety officers can assign, transition status, or resolve
+    match /incidents/{incidentId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.status == 'OPEN'
+        && (!request.resource.data.isAnonymous || (request.resource.data.workerId == null && request.resource.data.workerName == null));
+      allow update: if isAdminOrSafetyOfficer();
+      allow delete: if false;
+    }
+
+    // Fatigue alerts & threshold policies: read by signed-in users, managed by admins
+    match /fatigueAlerts/{alertId} {
+      allow read: if isSignedIn();
+      allow write: if isAdminOrSafetyOfficer();
+    }
+
+    match /policies/{policyId} {
+      allow read: if isSignedIn();
+      allow write: if isAdminOrSafetyOfficer();
+    }
+  }
+}
